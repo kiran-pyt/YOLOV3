@@ -1,0 +1,50 @@
+import torch
+
+def intersection_over_union(boxes_preds, boxes_labels):
+    # Calculate the coordinates of the top-left and bottom-right corners for both boxes
+    box1_x1 = boxes_preds[..., 0:1] - boxes_preds[..., 2:3] / 2
+    box1_y1 = boxes_preds[..., 1:2] - boxes_preds[..., 3:4] / 2
+    box1_x2 = boxes_preds[..., 0:1] + boxes_preds[..., 2:3] / 2
+    box1_y2 = boxes_preds[..., 1:2] + boxes_preds[..., 3:4] / 2
+
+    box2_x1 = boxes_labels[..., 0:1] - boxes_labels[..., 2:3] / 2
+    box2_y1 = boxes_labels[..., 1:2] - boxes_labels[..., 3:4] / 2
+    box2_x2 = boxes_labels[..., 0:1] + boxes_labels[..., 2:3] / 2
+    box2_y2 = boxes_labels[..., 1:2] + boxes_labels[..., 3:4] / 2
+
+    # Calculate the coordinates of the intersection area
+    x1 = torch.max(box1_x1, box2_x1)
+    y1 = torch.max(box1_y1, box2_y1)
+    x2 = torch.min(box1_x2, box2_x2)
+    y2 = torch.min(box1_y2, box2_y2)
+
+    # Calculate the intersection area
+    intersection = (x2 - x1).clamp(0) * (y2 - y1).clamp(0)
+
+    # Calculate the areas of both bounding boxes
+    box1_area = abs((box1_x2 - box1_x1) * (box1_y2 - box1_y1))
+    box2_area = abs((box2_x2 - box2_x1) * (box2_y2 - box2_y1))
+
+    # Calculate the IoU scores
+    iou = intersection / (box1_area + box2_area - intersection + 1e-6)
+
+    return iou
+
+# Example:
+# Define the bounding boxes (midpoint format)
+boxes_preds = torch.tensor([
+    [2.0, 2.0, 3.0, 3.0],  # Box 1 (Predicted)
+    [7.0, 6.0, 4.0, 4.0],  # Box 2 (Predicted)
+])
+
+boxes_labels = torch.tensor([
+    [3.0, 3.0, 2.0, 2.0],  # Box 1 (Ground Truth)
+    [8.0, 8.0, 3.0, 3.0],  # Box 2 (Ground Truth)
+])
+
+# Calculate the IoU scores
+iou_scores = intersection_over_union(boxes_preds, boxes_labels)
+
+# Print the IoU scores
+print("IoU Scores:")
+print(iou_scores)
